@@ -108,7 +108,6 @@ namespace BigJob
 
                 for (int i = 0; i < cell.DiagnosticIterations; i++)
                 {
-                    // Простые арифметические операции
                     double x = (i * 31.0 + 17.0) / 3.0;
                     if (i % 1000 == 0)
                         token.ThrowIfCancellationRequested();
@@ -150,6 +149,7 @@ namespace BigJob
                     if (chargerAcquired)
                     {
                         ctx.ChargerSemaphore.Release();
+                        chargerAcquired = false;
                         Log("Слот зарядки освобождён", cell.Id, result.Status);
                     }
                 }
@@ -170,7 +170,6 @@ namespace BigJob
 
                 try
                 {
-                    // Проверка отмены после захвата мьютекса
                     if (token.IsCancellationRequested)
                     {
                         throw new OperationCanceledException(token);
@@ -217,7 +216,7 @@ namespace BigJob
             }
             finally
             {
-                // Освобождение мьютекса, если он был захвачен но не освобождён в finally (на случай исключения до внутреннего finally)
+                // Освобождение мьютекса
                 if (mutexAcquired)
                 {
                     try { ctx.CalibrationMutex.ReleaseMutex(); } catch { }
@@ -244,7 +243,7 @@ namespace BigJob
             context = new StationContext(chargerSlots, cellCount);
             var cells = CreateCells();
 
-            // Настройка отмены по Ctrl+C
+            // Ctrl+C
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
